@@ -37,8 +37,11 @@ function setOperator(nextOperator) {
     if (operator && waitingForSecondOperand) {
         //(数値) + の状態の時に演算子を押した時の処理
         operator = nextOperator;
+        expression = firstOperand + " " + nextOperator;
+        calcDisplay.value = expression;
         return;
     }
+
     if (firstOperand === null) {
         firstOperand = inputValue;
     } else if (operator) {
@@ -48,7 +51,6 @@ function setOperator(nextOperator) {
         calcDisplay.value = String(result);
         firstOperand = result;
     }
-
     operator = nextOperator;
     waitingForSecondOperand = true;
 
