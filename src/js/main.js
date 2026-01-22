@@ -6,15 +6,19 @@ let firstOperand = null; //初期入力値を保存
 let operator = null;     //演算子を格納
 let waitingForSecondOperand = false; //二つ目の数値を入力中かどうか
 
+let expression = ""; // 表示用
+
 //数字ボタンが押されたときの処理
 function insertNumber(digit) {
     if (waitingForSecondOperand) {
         //(数字) + の状態の時に値を押した時の処理
-        calcDisplay.value = digit;
+        calcDisplay.value = expression + digit;
         waitingForSecondOperand = false;
+        expression += digit;
     } else {
         //上記でないときの処理
         calcDisplay.value = calcDisplay.value === '0' ? digit : calcDisplay.value + digit;
+        expression += digit;
     }
 }
 
@@ -37,7 +41,8 @@ function setOperator(nextOperator) {
     if (operator && waitingForSecondOperand) {
         //(数値) + の状態の時に演算子を押した時の処理
         operator = nextOperator;
-        expression = firstOperand + " " + nextOperator;
+        // expression = firstOperand + " " + nextOperator;
+        expression = expression.slice(0, -2) + nextOperator + " ";
         calcDisplay.value = expression;
         return;
     }
@@ -55,7 +60,7 @@ function setOperator(nextOperator) {
     waitingForSecondOperand = true;
 
     // 表示用
-    expression = firstOperand + " " + nextOperator;
+    expression = firstOperand + " " + nextOperator +" ";
     calcDisplay.value = expression;
 }
 
@@ -65,19 +70,23 @@ const performCalculation = {
     '*': (firstOperand, secondOperand) => firstOperand * secondOperand,
     '+': (firstOperand, secondOperand) => firstOperand + secondOperand,
     '-': (firstOperand, secondOperand) => firstOperand - secondOperand,
-    '=': (firstOperand, secondOperand) => secondOperand
 };
 
 //イコールボタンが押されたときの処理
 function calculate() {
-    const inputValue = parseFloat(calcDisplay.value);
-    if (operator && !waitingForSecondOperand) {
-        const result = performCalculation[operator](firstOperand, inputValue);
-        calcDisplay.value = String(result);
-        firstOperand = result;
-        operator = null;
-        waitingForSecondOperand = true;
-    }
+
+    // = を押しても計算できない時の処理
+    if (!operator || waitingForSecondOperand) return;
+
+    const parts = expression.split(" "); //空白で配列分け
+    const secondOperand = parseFloat(parts[2]);
+
+    const result = performCalculation[operator](firstOperand, secondOperand);
+    calcDisplay.value = result;
+    expression = "";
+    firstOperand = result;
+    operator = null;
+    waitingForSecondOperand = true;
 }
 
 //クリアボタンが押されたときの処理
@@ -86,6 +95,7 @@ function clearDisplay() {
     firstOperand = null;
     operator = null;
     waitingForSecondOperand = false;
+    expression = "";
 }
 
 $(".cal_btn").hover(
