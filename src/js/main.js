@@ -7,60 +7,61 @@ let operator = null;     //演算子を格納
 let waitingForSecondOperand = false; //二つ目の数値を入力中かどうか
 
 let expression = ""; // 表示用
+let currentInput=""; // 入力値
 
 //数字ボタンが押されたときの処理
 function insertNumber(digit) {
     if (waitingForSecondOperand) {
         //(数字) + の状態の時に値を押した時の処理
-        calcDisplay.value = expression + digit;
+        currentInput = digit;
         waitingForSecondOperand = false;
-        expression += digit;
     } else {
-        //上記でないときの処理
-        calcDisplay.value = calcDisplay.value === '0' ? digit : calcDisplay.value + digit;
-        expression += digit;
+        if (currentInput === "0" || currentInput === "00") {
+            //一番最初に0または00が押下された時の処理
+            currentInput = digit;
+        } else {
+            //上記でないときの処理
+            currentInput += digit;
+        }
+        
     }
+    calcDisplay.value = expression + currentInput;
 }
 
 //小数点ボタンが押されたときの処理
-function insertDecimal(dot) {
-    if (waitingForSecondOperand) {
-        calcDisplay.value = '0.';
-        waitingForSecondOperand = false;
-        return;
+function insertDecimal() {
+    if (currentInput.includes(".")) return;
+
+    if (currentInput === "") {
+        currentInput = "0.";
+    } else {
+        currentInput += ".";
     }
-    if (!calcDisplay.value.includes(dot)) {
-        //現在の入力値に小数点は含まれていないか
-        calcDisplay.value += dot;
-    }
+
+    waitingForSecondOperand = false;
+    calcDisplay.value = expression + currentInput;
 }
 
 //演算子ボタンが押されたときの処理
 function setOperator(nextOperator) {
-    const inputValue = parseFloat(calcDisplay.value);
-    if (operator && waitingForSecondOperand) {
-        //(数値) + の状態の時に演算子を押した時の処理
-        operator = nextOperator;
-        // expression = firstOperand + " " + nextOperator;
-        expression = expression.slice(0, -2) + nextOperator + " ";
-        calcDisplay.value = expression;
-        return;
-    }
+    if (currentInput === "") return;
+
+    const inputValue = parseFloat(currentInput);
 
     if (firstOperand === null) {
+
         firstOperand = inputValue;
     } else if (operator) {
         //(数値) + (数値) の状態で演算子を押した時の処理
         //現時点での計算結果を表示
-        const result = performCalculation[operator](firstOperand, inputValue);
-        calcDisplay.value = String(result);
-        firstOperand = result;
+        firstOperand = performCalculation[operator](firstOperand, inputValue);
     }
-    operator = nextOperator;
-    waitingForSecondOperand = true;
 
+    operator = nextOperator;
     // 表示用
-    expression = firstOperand + " " + nextOperator +" ";
+    expression = firstOperand + " " + nextOperator + " ";
+    currentInput = "";
+    waitingForSecondOperand = true;
     calcDisplay.value = expression;
 }
 
@@ -74,18 +75,17 @@ const performCalculation = {
 
 //イコールボタンが押されたときの処理
 function calculate() {
+    if (!operator || currentInput === "") return;
 
-    // = を押しても計算できない時の処理
-    if (!operator || waitingForSecondOperand) return;
-
-    const parts = expression.split(" "); //空白で配列分け
-    const secondOperand = parseFloat(parts[2]);
-
+    const secondOperand = parseFloat(currentInput);
     const result = performCalculation[operator](firstOperand, secondOperand);
+
     calcDisplay.value = result;
-    expression = "";
+
     firstOperand = result;
     operator = null;
+    expression = "";
+    currentInput = "";
     waitingForSecondOperand = true;
 }
 
@@ -96,6 +96,7 @@ function clearDisplay() {
     operator = null;
     waitingForSecondOperand = false;
     expression = "";
+    currentInput ="";
 }
 
 $(".cal_btn").hover(
